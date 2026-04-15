@@ -3,20 +3,20 @@ import { getDataUri } from '../symbol/symbolRenderer.js';
 import { SYMBOL_SIZE } from '../config.js';
 import { getSimulatedAircraft, getAircraftSidc } from './aircraftGenerator.js';
 
-let billboardCollection = null;
-let aircraftBillboards = new Map();
+let entityCollection = null;
+let aircraftEntities = new Map();
 let viewer = null;
 let lastUpdateTime = 0;
-const UPDATE_INTERVAL = 1000;
+const UPDATE_INTERVAL = 100;
 let maxVisibleAircraft = 300;
 
 export function initAircraftLayer3D(viewerParam) {
   viewer = viewerParam;
-  billboardCollection = viewer.scene.primitives.add(new Cesium.BillboardCollection());
-  return billboardCollection;
+  entityCollection = viewer.entities;
+  return entityCollection;
 }
 
-export function createAircraftBillboard(aircraft) {
+export function createAircraftEntity(aircraft) {
   const sidc = getAircraftSidc(aircraft.affiliation);
   const result = getDataUri(sidc, aircraft.heading, SYMBOL_SIZE, aircraft.affiliation);
   const { canvas, centerOffsetX, centerOffsetY } = result;
@@ -33,21 +33,23 @@ export function createAircraftBillboard(aircraft) {
     0
   );
   
-  const billboard = billboardCollection.add({
+  const entity = entityCollection.add({
     id: `aircraft_${aircraft.icao24}`,
-    image: canvas,
     position: position,
-    verticalOrigin: Cesium.VerticalOrigin.CENTER,
-    horizontalOrigin: Cesium.HorizontalOrigin.CENTER,
-    pixelOffset: new Cesium.Cartesian2(centerOffsetX, centerOffsetY),
-    scale: 0.8,
-    heightReference: Cesium.HeightReference.NONE,
-    disableDepthTestDistance: Number.POSITIVE_INFINITY,
-    icao24: aircraft.icao24,
-    callsign: aircraft.callsign
+    billboard: {
+      image: canvas,
+      verticalOrigin: Cesium.VerticalOrigin.CENTER,
+      horizontalOrigin: Cesium.HorizontalOrigin.CENTER,
+      pixelOffset: new Cesium.Cartesian2(centerOffsetX, centerOffsetY),
+      scale: 0.8,
+      heightReference: Cesium.HeightReference.NONE,
+      disableDepthTestDistance: Number.POSITIVE_INFINITY,
+      icao24: aircraft.icao24,
+      callsign: aircraft.callsign
+    }
   });
   
-  const leadLine = viewer.entities.add({
+  const leadLine = entityCollection.add({
     id: `aircraft_leadline_${aircraft.icao24}`,
     polyline: {
       positions: [groundPosition, position],
@@ -57,11 +59,11 @@ export function createAircraftBillboard(aircraft) {
     }
   });
   
-  return { billboard, leadLine };
+  return { entity, leadLine };
 }
 
 export function updateAircraftPositions3D() {
-  if (!billboardCollection || !viewer) return;
+  if (!entityCollection || !viewer) return;
   
   const now = Date.now();
   if (now - lastUpdateTime < UPDATE_INTERVAL) {
@@ -70,59 +72,46 @@ export function updateAircraftPositions3D() {
   lastUpdateTime = now;
   
   const camera = viewer.camera;
-  const position = camera.positionCartographic;
   const height = camera.positionCartographic.height;
   
-  // Adjust max visible based on camera height (LOD)
   const adjustedMaxVisible = Math.min(maxVisibleAircraft, Math.floor(height / 1000));
   
-  let updatedCount = 0;
   let removedCount = 0;
   let addedCount = 0;
   
-  // Get all aircraft and sort by distance
   const allAircraft = [];
   getSimulatedAircraft().forEach((aircraft, icao24) => {
-    const aircraftPos = Cesium.Cartesian3.fromDegrees(
-      aircraft.position.lon,
-      aircraft.position.lat,
-      aircraft.position.alt
-    );
-    const distance = Cesium.Cartesian3.distance(aircraftPos, camera.position);
-    
-    // Only consider aircraft within reasonable range
-    if (distance < 500000 && aircraft.position.alt >= 0) {
-      allAircraft.push({ aircraft, icao24, distance });
+    if (aircraft.position.alt >= 0) {
+      allAircraft.push({ aircraft, icao24 });
     }
   });
   
-  // Sort by distance and limit
-  allAircraft.sort((a, b) => a.distance - b.distance);
-  const visibleAircraft = allAircraft.slice(0, adjustedMaxVisible);
+  allAircraft.sort((a, b) => {
+    const posA = Cesium.Cartesian3.fromDegrees(a.aircraft.position.lon, a.aircraft.position.lat, a.aircraft.position.alt);
+    const posB = Cesium.Cartesian3.fromDegrees(b.aircraft.position.lon, b.aircraft.position.lat, b.aircraft.position.alt);
+    return Cesium.Cartesian3.distance(posA, camera.position) - Cesium.Cartesian3.distance(posB, camera.position);
+  });
   
-  // Remove aircraft that are no longer in the visible set
+  const visibleAircraft = allAircraft.slice(0, adjustedMaxVisible);
   const visibleIcaos = new Set(visibleAircraft.map(a => a.icao24));
   
-  aircraftBillboards.forEach((data, icao24) => {
+  aircraftEntities.forEach((data, icao24) => {
     if (!visibleIcaos.has(icao24)) {
       if (data.leadLine) {
-        viewer.entities.remove(data.leadLine);
+        entityCollection.remove(data.leadLine);
       }
-      if (data.billboard) {
-        billboardCollection.remove(data.billboard);
-      }
-      aircraftBillboards.delete(icao24);
+      entityCollection.remove(data.entity);
+      aircraftEntities.delete(icao24);
       removedCount++;
     }
   });
   
-  // Update or create visible aircraft
-  visibleAircraft.forEach(({ aircraft, icao24, distance }) => {
-    let data = aircraftBillboards.get(icao24);
+  visibleAircraft.forEach(({ aircraft, icao24 }) => {
+    let data = aircraftEntities.get(icao24);
     
     if (!data) {
-      data = createAircraftBillboard(aircraft);
-      aircraftBillboards.set(icao24, data);
+      data = createAircraftEntity(aircraft);
+      aircraftEntities.set(icao24, data);
       addedCount++;
     } else {
       const airPosition = Cesium.Cartesian3.fromDegrees(
@@ -137,37 +126,29 @@ export function updateAircraftPositions3D() {
         0
       );
       
-      data.billboard.position = airPosition;
+      data.entity.position = airPosition;
       
       if (data.leadLine) {
         data.leadLine.polyline.positions = [groundPosition, airPosition];
       }
-      
-      updatedCount++;
     }
   });
-  
-  if (updatedCount > 0 || addedCount > 0 || removedCount > 0) {
-    //console.log(`3D aircraft update (1Hz, max: ${adjustedMaxVisible}): updated ${updatedCount}, added ${addedCount}, removed ${removedCount}, total: ${aircraftBillboards.size}`);
-  }
 }
 
 export function clearAircraft3D() {
   if (viewer) {
-    aircraftBillboards.forEach((data, icao24) => {
+    aircraftEntities.forEach((data, icao24) => {
       if (data.leadLine) {
-        viewer.entities.remove(data.leadLine);
+        entityCollection.remove(data.leadLine);
       }
+      entityCollection.remove(data.entity);
     });
   }
-  if (billboardCollection) {
-    billboardCollection.removeAll();
-  }
-  aircraftBillboards.clear();
+  aircraftEntities.clear();
 }
 
 export function getAircraftBillboards() {
-  return aircraftBillboards;
+  return aircraftEntities;
 }
 
 export function setMaxVisibleAircraft(count) {
@@ -177,10 +158,6 @@ export function setMaxVisibleAircraft(count) {
 
 export function getMaxVisibleAircraft() {
   return maxVisibleAircraft;
-}
-
-function getSimulatedAircraftById(icao24) {
-  return getSimulatedAircraft().get(icao24);
 }
 
 function getLeadLineColor(affiliation) {

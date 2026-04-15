@@ -18,28 +18,12 @@ export function initMap3D(container, onClick) {
     infoBox: false,
     timeline: false,
     animation: false,
-    navigationHelpButton: true,
+    navigationHelpButton: false,
     navigationInstructionsInitiallyVisible: false,
     scene3DOnly: false,
-    shouldAnimate: false,
-    requestRenderMode: true,
-    maximumRenderTimeChange: Infinity
+    shouldAnimate: false
   });
   
-  const targetFPS = 30;
-  const renderInterval = 1000 / targetFPS;
-  let lastRenderTime = 0;
-  
-  function renderLoop() {
-    const now = Date.now();
-    if (now - lastRenderTime >= renderInterval) {
-      lastRenderTime = now;
-      viewer.scene.requestRender();
-    }
-    requestAnimationFrame(renderLoop);
-  }
-  renderLoop();
-
   viewer.imageryLayers.removeAll();
   
   const geoserverLayer = new Cesium.WebMapServiceImageryProvider({
@@ -55,13 +39,11 @@ export function initMap3D(container, onClick) {
   
   viewer.scene.globe.baseColor = Cesium.Color.fromCssColorString('#0d2137');
   
-  viewer.scene.fog.enabled = true;
-  viewer.scene.fog.density = 0.0002;
-  viewer.scene.fog.minimumBrightness = 0.8;
-  
   viewer.scene.skyAtmosphere.show = false;
   viewer.scene.skyBox.show = false;
   viewer.scene.backgroundColor = Cesium.Color.fromCssColorString('#0d2137');
+  
+  viewer.scene.globe.depthTestAgainstTerrain = false;
   
   viewer.camera.flyTo({
     destination: Cesium.Cartesian3.fromDegrees(SCENARIO_LON, SCENARIO_LAT, 200000),
@@ -78,7 +60,7 @@ export function initMap3D(container, onClick) {
   viewer.scene.screenSpaceCameraController.enableZoom = true;
   viewer.scene.screenSpaceCameraController.enableTilt = true;
   viewer.scene.screenSpaceCameraController.enableLook = true;
-  viewer.scene.screenSpaceCameraController.minimumZoomDistance = 1000;
+  viewer.scene.screenSpaceCameraController.minimumZoomDistance = 100;
   viewer.scene.screenSpaceCameraController.maximumZoomDistance = 50000000;
   
   const handler = new Cesium.ScreenSpaceEventHandler(viewer.scene.canvas);

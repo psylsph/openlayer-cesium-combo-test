@@ -202,11 +202,11 @@ async function init() {
       };
       
       //console.log('Generating 500 aircraft with lat/lon bounds:', bounds);
-      generateSimulatedAircraft(1000, bounds);
+      generateSimulatedAircraft(1500, bounds);
       
       // Set initial aircraft limits based on defaults
-      setMaxVisible2D(1000);
-      setMaxVisible3D(1000);
+      setMaxVisible2D(1500);
+      setMaxVisible3D(1500);
       
       console.log('Aircraft generation complete. Total aircraft:', getSimulatedAircraftCount());
     } catch (error) {
@@ -224,7 +224,7 @@ function startDeadReckoningLoop() {
     clearInterval(deadReckoningInterval);
   }
   deadReckoningInterval = setInterval(() => {
-    updateSimulatedAircraftPositions(1000);
+    updateSimulatedAircraftPositions(1500);
   }, 1000);
 }
 

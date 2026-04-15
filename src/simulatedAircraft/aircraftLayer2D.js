@@ -13,8 +13,8 @@ let aircraftLayer = null;
 let map2D = null;
 let aircraftFeatures = new Map();
 let lastUpdateTime = 0;
-const UPDATE_INTERVAL = 2000;
-let maxVisibleAircraft = 1000;
+const UPDATE_INTERVAL = 200;
+let maxVisibleAircraft = 1500;
 
 export function initAircraftLayer2D(map) {
   map2D = map;
