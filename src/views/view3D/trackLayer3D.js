@@ -13,14 +13,15 @@ export function initTrackLayer3D(viewerParam) {
   return entityCollection;
 }
 
-export function createTrackEntity(track) {
+export function createTrackEntity(track, elapsedSeconds = 0) {
+  const pos = calculatePosition(track, elapsedSeconds);
   const result = getDataUri(track.sidc, track.heading, SYMBOL_SIZE, track.affiliation);
   const { canvas, centerOffsetX, centerOffsetY } = result;
   
-  const altitude = track.startAlt || 0;
+  const altitude = pos.alt || 0;
   
-  const position = Cesium.Cartesian3.fromDegrees(track.startLon, track.startLat, altitude);
-  const groundPosition = Cesium.Cartesian3.fromDegrees(track.startLon, track.startLat, 0);
+  const position = Cesium.Cartesian3.fromDegrees(pos.lon, pos.lat, altitude);
+  const groundPosition = Cesium.Cartesian3.fromDegrees(pos.lon, pos.lat, 0);
   
   const entity = entityCollection.add({
     id: track.id,
@@ -61,26 +62,26 @@ export function updateTrackPositions3D(elapsedSeconds) {
   const tracks = getTracks();
   
   tracks.forEach(track => {
-    const pos = calculatePosition(track, elapsedSeconds);
     let data = trackEntities.get(track.id);
     
     if (!data) {
-      data = createTrackEntity(track);
+      data = createTrackEntity(track, elapsedSeconds);
       trackEntities.set(track.id, data);
-    }
-    
-    const altitude = pos.alt || 0;
-    const airPosition = Cesium.Cartesian3.fromDegrees(pos.lon, pos.lat, altitude);
-    const groundPosition = Cesium.Cartesian3.fromDegrees(pos.lon, pos.lat, 0);
-    
-    data.entity.position = airPosition;
-    
-    if (data.leadLine) {
-      if (altitude > 100) {
-        data.leadLine.polyline.positions = [groundPosition, airPosition];
-        data.leadLine.show = true;
-      } else {
-        data.leadLine.show = false;
+    } else {
+      const pos = calculatePosition(track, elapsedSeconds);
+      const altitude = pos.alt || 0;
+      const airPosition = Cesium.Cartesian3.fromDegrees(pos.lon, pos.lat, altitude);
+      
+      data.entity.position = airPosition;
+      
+      if (data.leadLine) {
+        const groundPosition = Cesium.Cartesian3.fromDegrees(pos.lon, pos.lat, 0);
+        if (altitude > 100) {
+          data.leadLine.polyline.positions = [groundPosition, airPosition];
+          data.leadLine.show = true;
+        } else {
+          data.leadLine.show = false;
+        }
       }
     }
   });

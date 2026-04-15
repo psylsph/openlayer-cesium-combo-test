@@ -21,7 +21,8 @@ export function initMap3D(container, onClick) {
     navigationHelpButton: false,
     navigationInstructionsInitiallyVisible: false,
     scene3DOnly: false,
-    shouldAnimate: false
+    shouldAnimate: false,
+    logarithmicDepthBuffer: true
   });
   
   viewer.imageryLayers.removeAll();
@@ -60,11 +61,11 @@ export function initMap3D(container, onClick) {
   viewer.scene.screenSpaceCameraController.enableZoom = true;
   viewer.scene.screenSpaceCameraController.enableTilt = true;
   viewer.scene.screenSpaceCameraController.enableLook = true;
-  viewer.scene.screenSpaceCameraController.minimumZoomDistance = 10;
-  viewer.scene.screenSpaceCameraController.maximumZoomDistance = 100000000;
+  viewer.scene.screenSpaceCameraController.minimumZoomDistance = 0;
+  viewer.scene.screenSpaceCameraController.maximumZoomDistance = Infinity;
   
-  viewer.scene.maximumScreenSpaceError = 16;
   viewer.scene.globe.depthTestAgainstTerrain = false;
+  viewer.scene.fog.enabled = false;
   
   const handler = new Cesium.ScreenSpaceEventHandler(viewer.scene.canvas);
   
