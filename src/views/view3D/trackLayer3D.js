@@ -1,5 +1,5 @@
 import * as Cesium from 'cesium';
-import { getDataUri, clearCache as clearSymbolCache } from '../../symbol/symbolRenderer.js';
+import { getDataUri } from '../../symbol/symbolRenderer.js';
 import { getTracks, calculatePosition } from '../../scenario/tracks.js';
 import { SYMBOL_SIZE } from '../../config.js';
 
@@ -19,7 +19,6 @@ export function createTrackEntity(track, elapsedSeconds = 0) {
   const { canvas, centerOffsetX, centerOffsetY } = result;
   
   const altitude = pos.alt || 0;
-  
   const position = Cesium.Cartesian3.fromDegrees(pos.lon, pos.lat, altitude);
   const groundPosition = Cesium.Cartesian3.fromDegrees(pos.lon, pos.lat, 0);
   
@@ -32,7 +31,7 @@ export function createTrackEntity(track, elapsedSeconds = 0) {
       horizontalOrigin: Cesium.HorizontalOrigin.CENTER,
       pixelOffset: new Cesium.Cartesian2(centerOffsetX, centerOffsetY),
       scale: 1.0,
-      heightReference: Cesium.HeightReference.NONE,
+      heightReference: Cesium.HeightReference.CLAMP_TO_GROUND,
       disableDepthTestDistance: Number.POSITIVE_INFINITY,
       eyeOffset: new Cesium.Cartesian3(0, 0, 0),
       trackId: track.id,
@@ -48,7 +47,7 @@ export function createTrackEntity(track, elapsedSeconds = 0) {
         positions: [groundPosition, position],
         width: 2,
         material: getLeadLineColor(track.affiliation),
-        clampToGround: false
+        disableDepthTestDistance: Number.POSITIVE_INFINITY
       }
     });
   }

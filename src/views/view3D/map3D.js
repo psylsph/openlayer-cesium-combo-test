@@ -21,8 +21,7 @@ export function initMap3D(container, onClick) {
     navigationHelpButton: false,
     navigationInstructionsInitiallyVisible: false,
     scene3DOnly: false,
-    shouldAnimate: false,
-    logarithmicDepthBuffer: true
+    shouldAnimate: false
   });
   
   viewer.imageryLayers.removeAll();
@@ -50,7 +49,7 @@ export function initMap3D(container, onClick) {
     destination: Cesium.Cartesian3.fromDegrees(SCENARIO_LON, SCENARIO_LAT, 200000),
     orientation: {
       heading: 0.0,
-      pitch: -Cesium.Math.PI_OVER_FOUR,
+      pitch: -Cesium.Math.PI_OVER_TWO,
       roll: 0.0
     },
     duration: 0
@@ -63,9 +62,18 @@ export function initMap3D(container, onClick) {
   viewer.scene.screenSpaceCameraController.enableLook = true;
   viewer.scene.screenSpaceCameraController.minimumZoomDistance = 0;
   viewer.scene.screenSpaceCameraController.maximumZoomDistance = Infinity;
+  viewer.scene.screenSpaceCameraController.enableCollisionDetection = false;
   
   viewer.scene.globe.depthTestAgainstTerrain = false;
   viewer.scene.fog.enabled = false;
+  viewer.scene.debugShowFrustumPlanes = false;
+  viewer.scene.requestRenderMode = false;
+  viewer.scene.minimumFramerate = 0;
+  viewer.scene.frustumCulling = false;
+  
+  viewer.scene.camera.frustum.near = 0.1;
+  viewer.scene.globe.show = true;
+  viewer.scene.globe.enableLighting = false;
   
   const handler = new Cesium.ScreenSpaceEventHandler(viewer.scene.canvas);
   

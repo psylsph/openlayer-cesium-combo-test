@@ -56,7 +56,7 @@ export function createAircraftEntity(aircraft) {
       positions: [groundPosition, position],
       width: 1,
       material: getLeadLineColor(aircraft.affiliation),
-      clampToGround: false
+      disableDepthTestDistance: Number.POSITIVE_INFINITY
     }
   });
   
