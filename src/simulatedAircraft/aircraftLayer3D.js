@@ -41,9 +41,10 @@ export function createAircraftEntity(aircraft) {
       verticalOrigin: Cesium.VerticalOrigin.CENTER,
       horizontalOrigin: Cesium.HorizontalOrigin.CENTER,
       pixelOffset: new Cesium.Cartesian2(centerOffsetX, centerOffsetY),
-      scale: 0.8,
+      scale: 1.0,
       heightReference: Cesium.HeightReference.NONE,
       disableDepthTestDistance: Number.POSITIVE_INFINITY,
+      eyeOffset: new Cesium.Cartesian3(0, 0, 0),
       icao24: aircraft.icao24,
       callsign: aircraft.callsign
     }
@@ -74,7 +75,7 @@ export function updateAircraftPositions3D() {
   const camera = viewer.camera;
   const height = camera.positionCartographic.height;
   
-  const adjustedMaxVisible = Math.min(maxVisibleAircraft, Math.floor(height / 1000));
+  const adjustedMaxVisible = Math.max(50, Math.min(maxVisibleAircraft, Math.floor(height / 100)));
   
   let removedCount = 0;
   let addedCount = 0;
@@ -92,7 +93,7 @@ export function updateAircraftPositions3D() {
     return Cesium.Cartesian3.distance(posA, camera.position) - Cesium.Cartesian3.distance(posB, camera.position);
   });
   
-  const visibleAircraft = allAircraft.slice(0, adjustedMaxVisible);
+  const visibleAircraft = allAircraft.slice(0, Math.min(adjustedMaxVisible, allAircraft.length));
   const visibleIcaos = new Set(visibleAircraft.map(a => a.icao24));
   
   aircraftEntities.forEach((data, icao24) => {

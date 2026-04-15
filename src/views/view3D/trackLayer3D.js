@@ -30,9 +30,10 @@ export function createTrackEntity(track) {
       verticalOrigin: Cesium.VerticalOrigin.CENTER,
       horizontalOrigin: Cesium.HorizontalOrigin.CENTER,
       pixelOffset: new Cesium.Cartesian2(centerOffsetX, centerOffsetY),
-      scale: 0.8,
+      scale: 1.0,
       heightReference: Cesium.HeightReference.NONE,
       disableDepthTestDistance: Number.POSITIVE_INFINITY,
+      eyeOffset: new Cesium.Cartesian3(0, 0, 0),
       trackId: track.id,
       trackName: track.name
     }
