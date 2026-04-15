@@ -24,6 +24,7 @@ export function switchTo2D() {
   
   if (map2d && map3d) {
     map2d.style.display = 'block';
+    map3d.classList.remove('active');
     map3d.style.display = 'none';
   }
   
@@ -33,7 +34,8 @@ export function switchTo2D() {
   
   const camPos = getCameraPosition();
   if (camPos) {
-    setCenter2D(camPos.lon, camPos.lat, Math.max(1, 18 - camPos.altitude / 50000));
+    const zoom = altitudeToZoom(camPos.altitude);
+    setCenter2D(camPos.lon, camPos.lat, zoom);
   }
   
   currentView = '2D';
@@ -52,6 +54,7 @@ export function switchTo3D() {
   
   if (map2d && map3d) {
     map2d.style.display = 'none';
+    map3d.classList.add('active');
     map3d.style.display = 'block';
   }
   
@@ -76,7 +79,7 @@ export function switchTo3D() {
       lat = center[1];
     }
     
-    const altitude = 500000 / Math.pow(2, zoom);
+    const altitude = zoomToAltitude(zoom);
     setCameraPosition(lon, lat, altitude, 0, -90);
   }
   
@@ -87,6 +90,16 @@ export function switchTo3D() {
   }
   
   return '3D';
+}
+
+function zoomToAltitude(zoom) {
+  const baseAltitude = 10000000;
+  return baseAltitude / Math.pow(2, zoom);
+}
+
+function altitudeToZoom(altitude) {
+  const baseAltitude = 10000000;
+  return Math.log2(baseAltitude / altitude);
 }
 
 export function syncViewports(fromView, toView) {

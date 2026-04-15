@@ -158,6 +158,7 @@
     #map-container {
       flex: 1;
       position: relative;
+      overflow: hidden;
     }
     #map2d, #map3d {
       position: absolute;
@@ -165,9 +166,23 @@
       left: 0;
       width: 100%;
       height: 100%;
+      overflow: hidden;
+    }
+    #map2d {
+      z-index: 1;
     }
     #map3d {
       display: none;
+      z-index: 2;
+      pointer-events: none;
+    }
+    #map3d.active {
+      display: block;
+      pointer-events: auto !important;
+    }
+    #map3d.active .cesium-widget,
+    #map3d.active .cesium-widget canvas {
+      pointer-events: auto !important;
     }
     #coordinate-readout {
       position: absolute;
@@ -186,6 +201,15 @@
     }
     .cesium-viewer-bottom {
       display: none !important;
+    }
+    #map3d {
+      pointer-events: auto !important;
+    }
+    .cesium-widget {
+      pointer-events: auto !important;
+    }
+    .cesium-widget canvas {
+      pointer-events: auto !important;
     }
   </style>
 </head>
@@ -210,12 +234,27 @@
           <select id="projection-select">
             <option value="EPSG:3857">Web Mercator</option>
             <option value="EPSG:4326">WGS84</option>
+            <option value="EPSG:32651">UTM Zone 51</option>
           </select>
         </div>
         <div class="toolbar-group">
           <button id="btn-reset" class="toolbar-btn">Reset</button>
           <button id="btn-play" class="toolbar-btn primary">Play</button>
           <span id="timeline-display">00:00</span>
+        </div>
+        <div class="toolbar-group">
+          <span class="toolbar-label">Aircraft:</span>
+          <span id="aircraft-count" style="color: #4fc3f7; font-family: 'Courier New', monospace; font-size: 13px;">● 0</span>
+          <select id="aircraft-limit" style="padding: 4px 8px; background: #252545; border: 1px solid #444; color: #eee; border-radius: 4px; font-size: 12px;">
+            <option value="100">100</option>
+            <option value="300">300</option>
+            <option value="500">500</option>
+            <option value="1000" selected>1000</option>
+            <option value="1500">1500</option>
+          </select>
+        </div>
+        <div class="toolbar-group">
+          <button id="btn-diagnostics" class="toolbar-btn">Diagnostics</button>
         </div>
       </div>
       <div id="map-container">

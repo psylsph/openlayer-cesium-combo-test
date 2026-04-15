@@ -20,7 +20,6 @@ export function getDataUri(sidc, heading = 0, size = 35, affiliation = null) {
   
   if (affiliation && COLOR_MAP[affiliation.toUpperCase()]) {
     options.monoColor = COLOR_MAP[affiliation.toUpperCase()];
-    options.fill = true;
   }
   
   const sym = new ms.Symbol(sidc, options);

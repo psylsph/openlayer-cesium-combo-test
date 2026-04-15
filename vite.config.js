@@ -14,9 +14,6 @@ export default defineConfig({
       }
     }
   },
-  optimizeDeps: {
-    include: ['ol', 'milsymbol']
-  },
   server: {
     port: 5173,
     open: false,

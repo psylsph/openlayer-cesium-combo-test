@@ -1,8 +1,8 @@
-import { get, transform, toLonLat, fromLonLat } from 'ol/proj.js';
+import { get, transform, toLonLat, fromLonLat, addProjection, Projection, createProjection } from 'ol/proj.js';
 import View from 'ol/View.js';
 import { getMap2D } from './map2D.js';
 
-const PROJECTIONS = ['EPSG:3857', 'EPSG:4326'];
+const PROJECTIONS = ['EPSG:3857', 'EPSG:4326', 'EPSG:32651'];
 
 export function getAvailableProjections() {
   return PROJECTIONS;
@@ -30,22 +30,32 @@ export function switchProjection(projCode) {
   const currentProjCode = currentProj.getCode();
   const centerLonLat = toLonLat(center, currentProjCode);
   
-  const newProj = get(projCode);
+  console.log(`Switching projection from ${currentProjCode} to ${projCode}, center:`, centerLonLat);
+  
+  let newProj = get(projCode);
+  
+  if (!newProj && projCode === 'EPSG:32651') {
+    console.warn('EPSG:32651 not available, using EPSG:4326');
+    newProj = get('EPSG:4326');
+  }
+  
   if (!newProj) {
     console.warn(`Projection ${projCode} not found, using EPSG:3857`);
-    return;
+    newProj = get('EPSG:3857');
   }
+  
+  const newCenter = fromLonLat(centerLonLat, newProj);
+  console.log('New center in projection:', newCenter);
   
   const newView = new View({
     projection: newProj,
-    center: fromLonLat(centerLonLat, newProj),
+    center: newCenter,
     zoom: zoom,
     rotation: rotation
   });
   
   map.setView(newView);
   
-  // Trigger a custom event so other modules can respond to projection change
   const event = new CustomEvent('projectionChanged', { 
     detail: { 
       oldProjCode: currentProjCode, 

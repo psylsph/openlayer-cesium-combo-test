@@ -7,15 +7,20 @@ import Point from 'ol/geom/Point.js';
 import { getDataUri } from '../../symbol/symbolRenderer.js';
 import { getTracks, calculatePosition } from '../../scenario/tracks.js';
 import { SYMBOL_SIZE } from '../../config.js';
+import { showTrackPopup } from '../../ui/popup.js';
+import { showTrackDetails, selectTrack as selectTrackInSidebar } from '../../ui/sidebar.js';
+import { getElapsedTime } from '../../scenario/timeline.js';
 
 let map2D = null;
 let trackLayer = null;
 let trackFeatures = new Map();
 let currentTracks = [];
 let currentProjectionCode = 'EPSG:3857';
+let onTrackSelectCallback = null;
 
-export function initTrackLayer2D(map) {
+export function initTrackLayer2D(map, onTrackSelect) {
   map2D = map;
+  onTrackSelectCallback = onTrackSelect;
   currentProjectionCode = map.getView().getProjection().getCode();
   
   const source = new VectorSource();
@@ -27,7 +32,31 @@ export function initTrackLayer2D(map) {
   
   map.addLayer(trackLayer);
   
+  // Add click handler for track popups
+  map.on('click', (evt) => {
+    const hitFeature = map.forEachFeatureAtPixel(evt.pixel, (f) => f);
+    if (hitFeature && hitFeature.get('trackId')) {
+      const trackId = hitFeature.get('trackId');
+      const track = getTracks().find(t => t.id === trackId);
+      if (track) {
+        evt.stopPropagation();
+        showTrackDetails(track);
+        selectTrackInSidebar(trackId);
+        onTrackSelectCallback(trackId);
+      }
+    }
+  });
+  
+  // Listen for projection changes
+  window.addEventListener('projectionChanged', handleProjectionChange);
+  
   return trackLayer;
+}
+
+function handleProjectionChange(event) {
+  const { newProjCode } = event.detail;
+  currentProjectionCode = newProjCode;
+  recreateAllFeatures();
 }
 
 export function createTrackFeature(track, map) {
@@ -55,6 +84,10 @@ export function createTrackFeature(track, map) {
   }));
   
   return feature;
+}
+
+export function getTrackLayerZIndex() {
+  return trackLayer ? trackLayer.getZIndex() : -1;
 }
 
 export function updateTrackPositions2D(elapsedSeconds) {
@@ -121,18 +154,18 @@ export function setTrackStyle(trackId, isSelected) {
   const track = tracks.find(t => t.id === trackId);
   if (!track) return;
   
-  const dataUri = getDataUri(track.sidc, track.heading, SYMBOL_SIZE);
-  const anchor = getAnchor(track.sidc, track.heading, SYMBOL_SIZE);
+  const result = getDataUri(track.sidc, track.heading, SYMBOL_SIZE, track.affiliation);
+  const { canvas, centerOffsetX, centerOffsetY } = result;
   
   feature.setStyle(new Style({
     image: new Icon({
-      src: dataUri,
-      anchorXUnits: 'pixels',
-      anchorYUnits: 'pixels',
-      anchorX: anchor.x,
-      anchorY: anchor.y,
+      img: canvas,
+      imgSize: [canvas.width, canvas.height],
+      anchor: [0.5, 0.5],
+      anchorXUnits: 'fraction',
+      anchorYUnits: 'fraction',
       opacity: isSelected ? 1.0 : 0.7,
-      scale: isSelected ? 1.2 : 1.0
+      scale: isSelected ? 1.0 : 0.8
     })
   }));
 }

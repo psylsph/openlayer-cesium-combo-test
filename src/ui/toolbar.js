@@ -1,6 +1,7 @@
 import { getCurrentView, toggleView } from '../views/viewSync.js';
 import { switchProjection, getCurrentProjection } from '../views/view2D/projection.js';
 import { startAnimation, pauseAnimation, resetAnimation, isAnimating, formatTime, getElapsedTime } from '../scenario/timeline.js';
+import { toggleDiagnostics, isDiagnosticsEnabled } from '../diagnostics/performance.js';
 
 export function initToolbar(onViewToggle, onProjectionChange, onPlayPause, onReset) {
   const btnView2d = document.getElementById('btn-view-2d');
@@ -8,6 +9,7 @@ export function initToolbar(onViewToggle, onProjectionChange, onPlayPause, onRes
   const projectionSelect = document.getElementById('projection-select');
   const btnPlay = document.getElementById('btn-play');
   const btnReset = document.getElementById('btn-reset');
+  const aircraftLimit = document.getElementById('aircraft-limit');
   
   if (btnView2d && btnView3d) {
     btnView2d.addEventListener('click', () => {
@@ -66,6 +68,21 @@ export function initToolbar(onViewToggle, onProjectionChange, onPlayPause, onRes
       }
     });
   }
+  
+  if (aircraftLimit) {
+    aircraftLimit.addEventListener('change', (e) => {
+      const limit = parseInt(e.target.value);
+      updateAircraftLimit(limit);
+    });
+  }
+  
+  const btnDiagnostics = document.getElementById('btn-diagnostics');
+  if (btnDiagnostics) {
+    btnDiagnostics.addEventListener('click', () => {
+      toggleDiagnostics();
+      btnDiagnostics.classList.toggle('active', isDiagnosticsEnabled());
+    });
+  }
 }
 
 export function updateViewButtons() {
@@ -110,4 +127,16 @@ export function showProjectionSelector() {
   if (group) {
     group.style.display = 'flex';
   }
+}
+
+export function updateAircraftCount(count) {
+  const indicator = document.getElementById('aircraft-count');
+  if (indicator) {
+    indicator.textContent = `● ${count}`;
+  }
+}
+
+export function updateAircraftLimit(count) {
+  // This would be implemented to update the aircraft layer limits
+  console.log('Aircraft limit changed to:', count);
 }

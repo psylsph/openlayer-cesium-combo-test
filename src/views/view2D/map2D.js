@@ -4,39 +4,44 @@ import TileWMS from 'ol/source/TileWMS.js';
 import TileLayer from 'ol/layer/Tile.js';
 import { fromLonLat, toLonLat } from 'ol/proj.js';
 import ScaleLine from 'ol/control/ScaleLine.js';
+import { defaults as defaultControls } from 'ol/control.js';
 import { DEFAULT_PROJECTION, SCENARIO_LAT, SCENARIO_LON, GEOSERVER_URL } from '../../config.js';
 
 let map = null;
 let currentProjection = DEFAULT_PROJECTION;
 
 export function initMap2D(container, onClick) {
-  const geoserverSource = new TileWMS({
-    url: GEOSERVER_URL + '/ows',
-    params: {
-      'LAYERS': 'ne:countries',
-      'FORMAT': 'image/png',
-      'TILED': true
-    },
-    serverType: 'geoserver',
-    crossOrigin: 'anonymous'
+  const geoserverLayer = new TileLayer({
+    source: new TileWMS({
+      url: GEOSERVER_URL + '/wms',
+      params: {
+        'LAYERS': 'ne:countries',
+        'TILED': true
+      },
+      serverType: 'geoserver',
+      transition: 0
+    })
   });
+
+  container.style.backgroundColor = '#1a3a5c';
+  container.style.background = 'linear-gradient(180deg, #1a3a5c 0%, #0d2137 100%)';
 
   map = new Map({
     target: container,
-    layers: [
-      new TileLayer({
-        source: geoserverSource,
-        preload: Infinity
-      })
-    ],
+    layers: [geoserverLayer],
     view: new View({
-      projection: currentProjection,
       center: fromLonLat([SCENARIO_LON, SCENARIO_LAT]),
-      zoom: 8
+      zoom: 10,
+      projection: DEFAULT_PROJECTION
     }),
-    controls: [
-      new ScaleLine({ units: 'nautical' })
-    ]
+    controls: defaultControls().extend([
+      new ScaleLine({
+        units: 'metric',
+        bar: true,
+        text: true,
+        minWidth: 100
+      })
+    ])
   });
 
   map.on('click', (evt) => {

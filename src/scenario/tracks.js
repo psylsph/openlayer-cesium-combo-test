@@ -34,6 +34,7 @@ const TRACK_DEFINITIONS = [
     speed: 15,
     startLat: SCENARIO_LAT,
     startLon: SCENARIO_LON,
+    startAlt: 0,
     heading: 90,
     description: 'Carrier'
   },
@@ -46,6 +47,7 @@ const TRACK_DEFINITIONS = [
     speed: 20,
     startLat: SCENARIO_LAT + 0.02,
     startLon: SCENARIO_LON + 0.01,
+    startAlt: 0,
     heading: 45,
     description: 'Own Ship'
   },
@@ -58,6 +60,7 @@ const TRACK_DEFINITIONS = [
     speed: 40,
     startLat: SCENARIO_LAT - 0.05,
     startLon: SCENARIO_LON - 0.08,
+    startAlt: 0,
     heading: 315,
     description: 'Torpedo Boat'
   },
@@ -70,6 +73,7 @@ const TRACK_DEFINITIONS = [
     speed: 40,
     startLat: SCENARIO_LAT - 0.08,
     startLon: SCENARIO_LON - 0.05,
+    startAlt: 0,
     heading: 300,
     description: 'Torpedo Boat'
   },
@@ -82,6 +86,7 @@ const TRACK_DEFINITIONS = [
     speed: 500,
     startLat: SCENARIO_LAT + 0.15,
     startLon: SCENARIO_LON - 0.1,
+    startAlt: 8000,
     heading: 270,
     description: 'Strike Aircraft'
   },
@@ -94,6 +99,7 @@ const TRACK_DEFINITIONS = [
     speed: 550,
     startLat: SCENARIO_LAT - 0.2,
     startLon: SCENARIO_LON + 0.15,
+    startAlt: 2000,
     heading: 30,
     description: 'Missile'
   }
@@ -115,8 +121,18 @@ export function calculatePosition(track, elapsedSeconds) {
   const latDelta = Math.cos(headingRad) * speedDegPerSec * elapsedSeconds;
   const lonDelta = Math.sin(headingRad) * speedDegPerSec * elapsedSeconds / Math.cos(track.startLat * Math.PI / 180);
   
+  let alt = track.startAlt || 0;
+  
+  if (track.type === TRACK_TYPES.STRIKE_AIRCRAFT) {
+    alt = 8000 + Math.sin(elapsedSeconds * 0.1) * 500;
+  } else if (track.type === TRACK_TYPES.MISSILE) {
+    const timeToTarget = 1800 - elapsedSeconds;
+    alt = Math.max(100, 2000 * (timeToTarget / 1800));
+  }
+  
   return {
     lat: track.startLat + latDelta,
-    lon: track.startLon + lonDelta
+    lon: track.startLon + lonDelta,
+    alt: alt
   };
 }

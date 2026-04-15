@@ -1,14 +1,16 @@
 import VectorLayer from 'ol/layer/Vector.js';
 import VectorSource from 'ol/source/Vector.js';
-import { Style, Stroke, Fill } from 'ol/style.js';
+import { Style, Stroke, Fill, Text as TextStyle } from 'ol/style.js';
 import Feature from 'ol/Feature.js';
-import { LineString, Polygon, Circle } from 'ol/geom.js';
+import { LineString, Polygon, Circle, Point } from 'ol/geom.js';
 import { fromLonLat } from 'ol/proj.js';
 import { getTracks, calculatePosition, AFFILIATIONS } from '../../scenario/tracks.js';
 
 let ownShipLayer = null;
 let map2D = null;
-const RANGE_RINGS = [5, 10, 25, 50, 100];
+let rangeRingLabels = [];
+let baseRangeDistance = 5000;
+const RANGE_RINGS = [1, 2, 3, 4, 5];
 const BEARING_ANGLES = [0, 45, 90, 135, 180, 225, 270, 315];
 
 export function initOwnShipLayer2D(map) {
@@ -22,6 +24,16 @@ export function initOwnShipLayer2D(map) {
   
   map.addLayer(ownShipLayer);
   
+  // Listen for projection changes and recreate features
+  window.addEventListener('projectionChanged', () => {
+    const tracks = getTracks();
+    const ownShip = tracks.find(t => t.affiliation === AFFILIATIONS.OWN_SHIP);
+    if (ownShip) {
+      const pos = calculatePosition(ownShip, 0);
+      updateOwnShip2D(0);
+    }
+  });
+  
   return ownShipLayer;
 }
 
@@ -30,42 +42,102 @@ function createRangeRings(centerLon, centerLat) {
   const view = map2D.getView();
   const projection = view.getProjection();
   const center = fromLonLat([centerLon, centerLat], projection);
+  const zoom = view.getZoom();
   
-  RANGE_RINGS.forEach(km => {
-    const radiusMeters = km * 1000;
+  baseRangeDistance = calculateBaseRangeDistance(zoom);
+  
+  RANGE_RINGS.forEach((multiplier, index) => {
+    const radiusMeters = baseRangeDistance * multiplier;
     const circleGeom = new Circle(center, radiusMeters);
     
     const feature = new Feature({
       geometry: circleGeom
     });
     
+    const isPrimaryRing = index === 0 || index === 2 || index === 4;
+    
     feature.setStyle(new Style({
       stroke: new Stroke({
-        color: km === 5 || km === 25 || km === 100 ? 'rgba(0, 200, 255, 0.6)' : 'rgba(0, 200, 255, 0.3)',
-        width: km === 5 || km === 25 || km === 100 ? 2 : 1
+        color: isPrimaryRing ? 'rgba(0, 200, 255, 0.7)' : 'rgba(0, 200, 255, 0.4)',
+        width: isPrimaryRing ? 2 : 1
       }),
       fill: new Fill({
-        color: 'rgba(0, 50, 100, 0.1)'
+        color: 'rgba(0, 50, 100, 0.05)'
       })
     }));
     
     features.push(feature);
+    
+    const labelLon = centerLon + (radiusMeters / 6371000) * (180 / Math.PI) / Math.cos(centerLat * Math.PI / 180);
+    const labelCoord = fromLonLat([labelLon, centerLat], projection);
+    
+    const labelFeature = new Feature({
+      geometry: new Point(labelCoord)
+    });
+    
+    labelFeature.setStyle(new Style({
+      text: new TextStyle({
+        text: formatDistance(radiusMeters),
+        font: '12px monospace',
+        fill: new Fill({
+          color: '#00c8ff'
+        }),
+        stroke: new Stroke({
+          color: 'rgba(0, 0, 0, 0.8)',
+          width: 2
+        }),
+        offsetX: 5,
+        offsetY: 0
+      })
+    }));
+    
+    features.push(labelFeature);
   });
   
   return features;
 }
 
+function formatDistance(meters) {
+  if (meters >= 100000) {
+    const km = Math.round(meters / 1000);
+    return `${Math.round(km / 10) * 10}km`;
+  } else if (meters >= 10000) {
+    const km = Math.round(meters / 1000);
+    return `${km}km`;
+  } else if (meters >= 1000) {
+    const km = meters / 1000;
+    return `${km.toFixed(1)}km`;
+  } else {
+    return `${Math.round(meters / 100) * 100}m`;
+  }
+}
+
+function calculateBaseRangeDistance(zoom) {
+  const map = map2D;
+  const view = map.getView();
+  const extent = view.calculateExtent(map.getSize());
+  
+  const width = extent[2] - extent[0];
+  const height = extent[3] - extent[1];
+  const minDimension = Math.min(width, height);
+  
+  return minDimension * 0.05;
+}
+
 function createBearingLines(centerLon, centerLat) {
   const features = [];
-  const lineLengthKm = 200;
   const view = map2D.getView();
   const projection = view.getProjection();
   const center = fromLonLat([centerLon, centerLat], projection);
   
-  BEARING_ANGLES.forEach(angle => {
+  const lineLengthMultiplier = 1.05;
+  const lineLengthMeters = baseRangeDistance * 5 * lineLengthMultiplier;
+  const lineLengthDeg = lineLengthMeters / 111320;
+  
+  BEARING_ANGLES.forEach((angle, index) => {
     const angleRad = angle * (Math.PI / 180);
-    const endLat = centerLat + (lineLengthKm / 111.32) * Math.cos(angleRad);
-    const endLon = centerLon + (lineLengthKm / 111.32) * Math.sin(angleRad) / Math.cos(centerLat * Math.PI / 180);
+    const endLat = centerLat + lineLengthDeg * Math.cos(angleRad);
+    const endLon = centerLon + lineLengthDeg * Math.sin(angleRad) / Math.cos(centerLat * Math.PI / 180);
     
     const end = fromLonLat([endLon, endLat], projection);
     const lineGeom = new LineString([center, end]);
@@ -92,6 +164,7 @@ export function updateOwnShip2D(elapsedSeconds) {
   
   const source = ownShipLayer.getSource();
   source.clear();
+  rangeRingLabels = [];
   
   const tracks = getTracks();
   const ownShip = tracks.find(t => t.affiliation === AFFILIATIONS.OWN_SHIP);
