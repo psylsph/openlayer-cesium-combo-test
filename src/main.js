@@ -1,4 +1,5 @@
-import { initMap2D, updateCoordinateReadout, setCenter as setCenter2D, getCenter as getCenter2D, getZoom, getMap2D } from './views/view2D/map2D.js';
+import { getMap2D, initMap2D, updateCoordinateReadout, setCenter as setCenter2D, getCenter as getCenter2D, getZoom } from './views/view2D/map2D.js';
+import { switchProjection } from './views/view2D/projection.js';
 import { initTrackLayer2D, updateTrackPositions2D, setTrackStyle } from './views/view2D/trackLayer2D.js';
 import { initOwnShipLayer2D, updateOwnShip2D } from './views/view2D/ownShip2D.js';
 import { initMap3D, isWebGLAvailable, setCameraPosition } from './views/view3D/map3D.js';
@@ -164,7 +165,7 @@ async function init() {
   
   initViewSync(onViewChange);
   initTimeline(onAnimationTick);
-  initToolbar(() => toggleView(), null, null, null);
+  initToolbar(() => toggleView(), (proj) => switchProjection(proj), null, null);
   initSidebar(onTrackSelect);
   
   startDeadReckoningLoop();

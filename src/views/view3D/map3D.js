@@ -15,15 +15,30 @@ export function initMap3D(container, onClick) {
     homeButton: false,
     sceneModePicker: false,
     selectionIndicator: false,
+    infoBox: false,
     timeline: false,
     animation: false,
     navigationHelpButton: true,
     navigationInstructionsInitiallyVisible: false,
     scene3DOnly: false,
     shouldAnimate: false,
-    requestRenderMode: false,
+    requestRenderMode: true,
     maximumRenderTimeChange: Infinity
   });
+  
+  const targetFPS = 30;
+  const renderInterval = 1000 / targetFPS;
+  let lastRenderTime = 0;
+  
+  function renderLoop() {
+    const now = Date.now();
+    if (now - lastRenderTime >= renderInterval) {
+      lastRenderTime = now;
+      viewer.scene.requestRender();
+    }
+    requestAnimationFrame(renderLoop);
+  }
+  renderLoop();
 
   viewer.imageryLayers.removeAll();
   
@@ -69,16 +84,9 @@ export function initMap3D(container, onClick) {
   const handler = new Cesium.ScreenSpaceEventHandler(viewer.scene.canvas);
   
   handler.setInputAction((movement) => {
-    console.log('3D map clicked at pixel:', movement.position.x, movement.position.y);
     const pickedObject = viewer.scene.pick(movement.position);
-    console.log('Picked object defined:', Cesium.defined(pickedObject));
     if (Cesium.defined(pickedObject) && pickedObject.id) {
       const entity = pickedObject.id;
-      console.log('Entity type:', typeof entity);
-      console.log('Entity keys:', Object.keys(entity));
-      console.log('Entity trackId:', entity.trackId);
-      console.log('Entity trackName:', entity.trackName);
-      console.log('Entity icao24:', entity.icao24);
       
       if (entity.icao24) {
         const aircraft = getSimulatedAircraft().get(entity.icao24);
@@ -87,26 +95,22 @@ export function initMap3D(container, onClick) {
           return;
         }
       }
-      if (entity.trackId && onClick) {
-        console.log('Calling onClick with trackId:', entity.trackId);
-        onClick({
-          entity: entity,
-          trackId: entity.trackId,
-          trackName: entity.trackName,
-          pixel: [movement.position.x, movement.position.y]
-        });
-      }
       
-      // Always show track details in sidebar when track is selected
       if (entity.trackId) {
         const tracks = getTracks();
         const track = tracks.find(t => t.id === entity.trackId);
         if (track) {
           showTrackDetails(track);
+          if (onClick) {
+            onClick({
+              entity: entity,
+              trackId: entity.trackId,
+              trackName: entity.trackName,
+              pixel: [movement.position.x, movement.position.y]
+            });
+          }
         }
       }
-    } else {
-      console.log('No object picked - clicked on background');
     }
   }, Cesium.ScreenSpaceEventType.LEFT_CLICK);
   

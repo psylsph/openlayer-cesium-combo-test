@@ -1,5 +1,7 @@
 import * as Cesium from 'cesium';
 import { getTracks, calculatePosition, AFFILIATIONS } from '../../scenario/tracks.js';
+import { getDataUri } from '../../symbol/symbolRenderer.js';
+import { SYMBOL_SIZE } from '../../config.js';
 
 let entityCollection = null;
 let rangeRingEntities = [];
@@ -24,14 +26,24 @@ function createRangeRings(pos) {
     return;
   }
   
+  const tracks = getTracks();
+  const ownShip = tracks.find(t => t.affiliation === AFFILIATIONS.OWN_SHIP);
+  if (!ownShip) return;
+  
+  const result = getDataUri(ownShip.sidc, ownShip.heading, SYMBOL_SIZE, ownShip.affiliation);
+  const offsetX = result.centerOffsetX || 0;
+  const offsetY = result.centerOffsetY || 0;
+  
+  const metersPerDeg = 111320 * Math.cos(pos.lat * Math.PI / 180);
+  const centerLon = pos.lon - (offsetX / SYMBOL_SIZE) * (0.01 / metersPerDeg);
+  const centerLat = pos.lat + (offsetY / SYMBOL_SIZE) * (0.01 / metersPerDeg);
+  
   baseRangeDistance = calculateBaseRangeDistance();
   
   if (!Number.isFinite(baseRangeDistance) || baseRangeDistance <= 0) {
     console.warn('Invalid base range distance:', baseRangeDistance);
     return;
   }
-  
-  //console.log('Creating 3D range rings at position:', pos, 'base distance:', baseRangeDistance);
   
   RANGE_RINGS.forEach((multiplier, index) => {
     const radiusMeters = baseRangeDistance * multiplier;
@@ -45,7 +57,7 @@ function createRangeRings(pos) {
     
     const entity = entityCollection.add({
       id: `range-ring-${multiplier}`,
-      position: Cesium.Cartesian3.fromDegrees(pos.lon, pos.lat, 0),
+      position: Cesium.Cartesian3.fromDegrees(centerLon, centerLat, 0),
       ellipse: {
         semiMajorAxis: radiusMeters,
         semiMinorAxis: radiusMeters,
@@ -63,9 +75,9 @@ function createRangeRings(pos) {
     
     const labelDistance = formatDistance(radiusMeters);
     const eastOffset = radiusMeters * 1.05;
-    const labelLon = pos.lon + (eastOffset / 6371000) * (180 / Math.PI) / Math.cos(pos.lat * Math.PI / 180);
+    const labelLon = centerLon + (eastOffset / 6371000) * (180 / Math.PI) / Math.cos(pos.lat * Math.PI / 180);
     
-    const labelPos = Cesium.Cartesian3.fromDegrees(labelLon, pos.lat, 100);
+    const labelPos = Cesium.Cartesian3.fromDegrees(labelLon, centerLat, 100);
     
     const label = entityCollection.add({
       id: `range-ring-label-${multiplier}`,
@@ -133,19 +145,31 @@ function calculateBaseRangeDistance() {
 function createBearingLines(pos) {
   clearBearingLines();
   
+  const tracks = getTracks();
+  const ownShip = tracks.find(t => t.affiliation === AFFILIATIONS.OWN_SHIP);
+  if (!ownShip) return;
+  
+  const result = getDataUri(ownShip.sidc, ownShip.heading, SYMBOL_SIZE, ownShip.affiliation);
+  const offsetX = result.centerOffsetX || 0;
+  const offsetY = result.centerOffsetY || 0;
+  
+  const metersPerDeg = 111320 * Math.cos(pos.lat * Math.PI / 180);
+  const centerLon = pos.lon - (offsetX / SYMBOL_SIZE) * (0.01 / metersPerDeg);
+  const centerLat = pos.lat + (offsetY / SYMBOL_SIZE) * (0.01 / metersPerDeg);
+  
   const lineLengthMultiplier = 1.05;
   const lineLengthMeters = baseRangeDistance * 5 * lineLengthMultiplier;
   
   BEARING_ANGLES.forEach((angle, index) => {
     const angleRad = angle * (Math.PI / 180);
-    const endLat = pos.lat + (lineLengthMeters / 6371000) * Math.cos(angleRad) * (180 / Math.PI);
-    const endLon = pos.lon + (lineLengthMeters / 6371000) * Math.sin(angleRad) * (180 / Math.PI) / Math.cos(pos.lat * Math.PI / 180);
+    const endLat = centerLat + (lineLengthMeters / 6371000) * Math.cos(angleRad) * (180 / Math.PI);
+    const endLon = centerLon + (lineLengthMeters / 6371000) * Math.sin(angleRad) * (180 / Math.PI) / Math.cos(pos.lat * Math.PI / 180);
     
     const entity = entityCollection.add({
       id: `bearing-line-${angle}`,
       polyline: {
         positions: Cesium.Cartesian3.fromDegreesArrayHeights([
-          pos.lon, pos.lat, 0,
+          centerLon, centerLat, 0,
           endLon, endLat, 0
         ]),
         width: angle % 90 === 0 ? 3 : 2,

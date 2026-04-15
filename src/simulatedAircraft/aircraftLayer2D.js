@@ -34,7 +34,6 @@ export function initAircraftLayer2D(map) {
     if (feature && feature.get('icao24')) {
       const aircraft = getSimulatedAircraft().get(feature.get('icao24'));
       if (aircraft) {
-        evt.stopPropagation();
         showAircraftDetails(aircraft);
       }
     }
@@ -96,7 +95,7 @@ export function updateAircraftPositions2D() {
   
   const adjustedMaxVisible = Math.min(maxVisibleAircraft, Math.floor(Math.pow(2, zoom) * 10));
   
-  console.log(`updateAircraftPositions2D (1Hz, zoom: ${zoom.toFixed(1)}, max: ${adjustedMaxVisible}), showing: ${aircraftFeatures.size}`);
+  //console.log(`updateAircraftPositions2D (2Hz, zoom: ${zoom.toFixed(1)}, max: ${adjustedMaxVisible}), showing: ${aircraftFeatures.size}`);
   
   const simulatedAircraft = getSimulatedAircraft();
   
@@ -171,7 +170,7 @@ export function updateAircraftPositions2D() {
   });
   
   if (createdCount > 0 || updatedCount > 0) {
-    console.log(`Aircraft layer update: created ${createdCount}, updated ${updatedCount}, total: ${aircraftFeatures.size}`);
+    //console.log(`Aircraft layer update: created ${createdCount}, updated ${updatedCount}, total: ${aircraftFeatures.size}`);
   }
 }
 

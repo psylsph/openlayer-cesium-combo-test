@@ -1,31 +1,25 @@
 const SCENARIO_DURATION = 120;
 let animationId = null;
 let startTime = null;
-let pausedTime = 0;
-let isPlaying = false;
+let elapsedTime = 0;
 let onTickCallback = null;
 
 export function initTimeline(onTick) {
   onTickCallback = onTick;
-  resetAnimation();
+  startAnimation();
 }
 
 export function startAnimation() {
-  if (isPlaying) return;
+  if (animationId) return;
   
-  isPlaying = true;
-  startTime = Date.now() - pausedTime;
+  startTime = Date.now() - (elapsedTime * 1000);
   
   function tick() {
-    if (!isPlaying) return;
-    
     const elapsed = (Date.now() - startTime) / 1000;
-    pausedTime = elapsed * 1000;
+    elapsedTime = elapsed;
     
     if (elapsed >= SCENARIO_DURATION) {
-      resetAnimation();
-      startAnimation();
-      return;
+      startTime = Date.now();
     }
     
     if (onTickCallback) {
@@ -39,7 +33,6 @@ export function startAnimation() {
 }
 
 export function pauseAnimation() {
-  isPlaying = false;
   if (animationId) {
     cancelAnimationFrame(animationId);
     animationId = null;
@@ -48,19 +41,20 @@ export function pauseAnimation() {
 
 export function resetAnimation() {
   pauseAnimation();
-  pausedTime = 0;
-  startTime = null;
+  elapsedTime = 0;
+  startTime = Date.now();
   if (onTickCallback) {
     onTickCallback(0);
   }
+  startAnimation();
 }
 
 export function getElapsedTime() {
-  return pausedTime / 1000;
+  return elapsedTime;
 }
 
 export function isAnimating() {
-  return isPlaying;
+  return animationId !== null;
 }
 
 export function getDuration() {

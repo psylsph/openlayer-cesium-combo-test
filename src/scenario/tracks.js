@@ -26,82 +26,17 @@ const SIDC = {
 
 const TRACK_DEFINITIONS = [
   {
-    id: 'queen_elizabeth',
-    name: 'HMS Queen Elizabeth',
-    type: TRACK_TYPES.CARRIER,
-    affiliation: AFFILIATIONS.FRIENDLY,
-    sidc: SIDC.CARRIER,
-    speed: 15,
-    startLat: SCENARIO_LAT,
-    startLon: SCENARIO_LON,
-    startAlt: 0,
-    heading: 90,
-    description: 'Carrier'
-  },
-  {
     id: 'defender',
     name: 'HMS Defender',
     type: TRACK_TYPES.OWN_SHIP,
     affiliation: AFFILIATIONS.OWN_SHIP,
     sidc: SIDC.OWN_SHIP,
     speed: 20,
-    startLat: SCENARIO_LAT + 0.02,
-    startLon: SCENARIO_LON + 0.01,
+    startLat: SCENARIO_LAT,
+    startLon: SCENARIO_LON,
     startAlt: 0,
     heading: 45,
     description: 'Own Ship'
-  },
-  {
-    id: 'torpedo_boat_1',
-    name: 'Enemy Torpedo Boat 1',
-    type: TRACK_TYPES.TORPEDO_BOAT,
-    affiliation: AFFILIATIONS.HOSTILE,
-    sidc: SIDC.TORPEDO_BOAT,
-    speed: 40,
-    startLat: SCENARIO_LAT - 0.05,
-    startLon: SCENARIO_LON - 0.08,
-    startAlt: 0,
-    heading: 315,
-    description: 'Torpedo Boat'
-  },
-  {
-    id: 'torpedo_boat_2',
-    name: 'Enemy Torpedo Boat 2',
-    type: TRACK_TYPES.TORPEDO_BOAT,
-    affiliation: AFFILIATIONS.HOSTILE,
-    sidc: SIDC.TORPEDO_BOAT,
-    speed: 40,
-    startLat: SCENARIO_LAT - 0.08,
-    startLon: SCENARIO_LON - 0.05,
-    startAlt: 0,
-    heading: 300,
-    description: 'Torpedo Boat'
-  },
-  {
-    id: 'strike_aircraft',
-    name: 'Enemy Strike Aircraft',
-    type: TRACK_TYPES.STRIKE_AIRCRAFT,
-    affiliation: AFFILIATIONS.HOSTILE,
-    sidc: SIDC.STRIKE_AIRCRAFT,
-    speed: 500,
-    startLat: SCENARIO_LAT + 0.15,
-    startLon: SCENARIO_LON - 0.1,
-    startAlt: 8000,
-    heading: 270,
-    description: 'Strike Aircraft'
-  },
-  {
-    id: 'missile',
-    name: 'Land Attack Missile',
-    type: TRACK_TYPES.MISSILE,
-    affiliation: AFFILIATIONS.HOSTILE,
-    sidc: SIDC.MISSILE,
-    speed: 550,
-    startLat: SCENARIO_LAT - 0.2,
-    startLon: SCENARIO_LON + 0.15,
-    startAlt: 2000,
-    heading: 30,
-    description: 'Missile'
   }
 ];
 

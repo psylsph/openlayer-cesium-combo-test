@@ -202,6 +202,13 @@
     .cesium-viewer-bottom {
       display: none !important;
     }
+    .cesium-infoBox {
+      display: none !important;
+    }
+    .cesium-viewer .cesium-infoBox {
+      display: none !important;
+      visibility: hidden !important;
+    }
     #map3d {
       pointer-events: auto !important;
     }
@@ -238,8 +245,8 @@
           </select>
         </div>
         <div class="toolbar-group">
-          <button id="btn-reset" class="toolbar-btn">Reset</button>
-          <button id="btn-play" class="toolbar-btn primary">Play</button>
+          <button id="btn-reset" class="toolbar-btn" style="display: none;">Reset</button>
+          <button id="btn-play" class="toolbar-btn primary" style="display: none;">Play</button>
           <span id="timeline-display">00:00</span>
         </div>
         <div class="toolbar-group">

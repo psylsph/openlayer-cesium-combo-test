@@ -148,7 +148,7 @@ export function updateAircraftPositions3D() {
   });
   
   if (updatedCount > 0 || addedCount > 0 || removedCount > 0) {
-    console.log(`3D aircraft update (1Hz, max: ${adjustedMaxVisible}): updated ${updatedCount}, added ${addedCount}, removed ${removedCount}, total: ${aircraftBillboards.size}`);
+    //console.log(`3D aircraft update (1Hz, max: ${adjustedMaxVisible}): updated ${updatedCount}, added ${addedCount}, removed ${removedCount}, total: ${aircraftBillboards.size}`);
   }
 }
 

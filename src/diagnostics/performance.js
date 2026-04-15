@@ -118,7 +118,7 @@ function logDiagnostics() {
     console.warn('⚠️ LOW FPS DETECTED - Performance issues detected!');
   }
   if (diagnostics.layerCounts['aircraft2D'] > 300) {
-    console.warn('⚠️ HIGH AIRCRAFT COUNT - Consider reducing visible aircraft');
+    //console.warn('⚠️ HIGH AIRCRAFT COUNT - Consider reducing visible aircraft');
   }
   console.log('=============================');
 }

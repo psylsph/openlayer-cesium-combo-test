@@ -7,9 +7,7 @@ import Point from 'ol/geom/Point.js';
 import { getDataUri } from '../../symbol/symbolRenderer.js';
 import { getTracks, calculatePosition } from '../../scenario/tracks.js';
 import { SYMBOL_SIZE } from '../../config.js';
-import { showTrackPopup } from '../../ui/popup.js';
 import { showTrackDetails, selectTrack as selectTrackInSidebar } from '../../ui/sidebar.js';
-import { getElapsedTime } from '../../scenario/timeline.js';
 
 let map2D = null;
 let trackLayer = null;
@@ -32,14 +30,13 @@ export function initTrackLayer2D(map, onTrackSelect) {
   
   map.addLayer(trackLayer);
   
-  // Add click handler for track popups
+  // Add click handler for track details
   map.on('click', (evt) => {
     const hitFeature = map.forEachFeatureAtPixel(evt.pixel, (f) => f);
     if (hitFeature && hitFeature.get('trackId')) {
       const trackId = hitFeature.get('trackId');
       const track = getTracks().find(t => t.id === trackId);
       if (track) {
-        evt.stopPropagation();
         showTrackDetails(track);
         selectTrackInSidebar(trackId);
         onTrackSelectCallback(trackId);
@@ -165,7 +162,7 @@ export function setTrackStyle(trackId, isSelected) {
       anchorXUnits: 'fraction',
       anchorYUnits: 'fraction',
       opacity: isSelected ? 1.0 : 0.7,
-      scale: isSelected ? 1.0 : 0.8
+      scale: isSelected ? 0.85 : 0.8
     })
   }));
 }

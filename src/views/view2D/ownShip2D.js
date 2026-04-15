@@ -5,6 +5,8 @@ import Feature from 'ol/Feature.js';
 import { LineString, Polygon, Circle, Point } from 'ol/geom.js';
 import { fromLonLat } from 'ol/proj.js';
 import { getTracks, calculatePosition, AFFILIATIONS } from '../../scenario/tracks.js';
+import { getDataUri } from '../../symbol/symbolRenderer.js';
+import { SYMBOL_SIZE } from '../../config.js';
 
 let ownShipLayer = null;
 let map2D = null;
@@ -173,8 +175,16 @@ export function updateOwnShip2D(elapsedSeconds) {
   
   const pos = calculatePosition(ownShip, elapsedSeconds);
   
-  const rangeRingFeatures = createRangeRings(pos.lon, pos.lat);
-  const bearingFeatures = createBearingLines(pos.lon, pos.lat);
+  const result = getDataUri(ownShip.sidc, ownShip.heading, SYMBOL_SIZE, ownShip.affiliation);
+  const offsetX = result.centerOffsetX || 0;
+  const offsetY = result.centerOffsetY || 0;
+  
+  const metersPerDeg = 111320 * Math.cos(pos.lat * Math.PI / 180);
+  const centerLon = pos.lon - (offsetX / SYMBOL_SIZE) * (0.01 / metersPerDeg);
+  const centerLat = pos.lat + (offsetY / SYMBOL_SIZE) * (0.01 / metersPerDeg);
+  
+  const rangeRingFeatures = createRangeRings(centerLon, centerLat);
+  const bearingFeatures = createBearingLines(centerLon, centerLat);
   
   rangeRingFeatures.forEach(f => source.addFeature(f));
   bearingFeatures.forEach(f => source.addFeature(f));

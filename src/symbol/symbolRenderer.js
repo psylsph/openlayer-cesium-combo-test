@@ -27,7 +27,7 @@ export function getDataUri(sidc, heading = 0, size = 35, affiliation = null) {
   
   // Add transparent background for picking
   const ctx = canvas.getContext('2d');
-  const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+  const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height, { willReadFrequently: true });
   const data = imageData.data;
   
   for (let i = 0; i < data.length; i += 4) {
