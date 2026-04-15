@@ -83,9 +83,7 @@ function createRangeRingsAndBearingLines() {
         material: index === 0 
           ? Cesium.Color.LIME 
           : Cesium.Color.LIME.withAlpha(0.3),
-        disableDepthTestDistance: Number.POSITIVE_INFINITY,
-        nearDisplayDistance: 0,
-        farDisplayDistance: Number.POSITIVE_INFINITY
+        disableDepthTestDistance: Number.POSITIVE_INFINITY
       }
     });
   });
@@ -156,9 +154,7 @@ function createRangeRingsAndBearingLines() {
         }, false),
         width: majorLine ? 2 : 1,
         material: Cesium.Color.LIME.withAlpha(majorLine ? 0.7 : 0.35),
-        disableDepthTestDistance: Number.POSITIVE_INFINITY,
-        nearDisplayDistance: 0,
-        farDisplayDistance: Number.POSITIVE_INFINITY
+        disableDepthTestDistance: Number.POSITIVE_INFINITY
       }
     });
   }

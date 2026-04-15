@@ -74,8 +74,11 @@ export function updateAircraftPositions3D() {
   
   const camera = viewer.camera;
   const height = camera.positionCartographic.height;
-  
-  const adjustedMaxVisible = Math.max(50, Math.min(maxVisibleAircraft, Math.floor(height / 100)));
+
+  // Log scale so zooming in doesn't collapse the visible count to near-zero.
+  // At 200 km shows full budget; at 1 km still shows at least 50.
+  const logFactor = height > 0 ? Math.log10(Math.max(height, 1000)) / Math.log10(200000) : 1;
+  const adjustedMaxVisible = Math.max(50, Math.min(maxVisibleAircraft, Math.round(maxVisibleAircraft * logFactor)));
   
   let removedCount = 0;
   let addedCount = 0;

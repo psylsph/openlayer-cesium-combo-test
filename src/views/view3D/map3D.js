@@ -23,9 +23,9 @@ export function initMap3D(container, onClick) {
     scene3DOnly: false,
     shouldAnimate: false
   });
-  
+
   viewer.imageryLayers.removeAll();
-  
+
   const geoserverLayer = new Cesium.WebMapServiceImageryProvider({
     url: GEOSERVER_URL + '/ows',
     layers: 'ne:countries',
@@ -34,17 +34,17 @@ export function initMap3D(container, onClick) {
       transparent: 'true'
     }
   });
-  
+
   viewer.imageryLayers.addImageryProvider(geoserverLayer);
-  
+
   viewer.scene.globe.baseColor = Cesium.Color.fromCssColorString('#0d2137');
-  
+
   viewer.scene.skyAtmosphere.show = false;
   viewer.scene.skyBox.show = false;
   viewer.scene.backgroundColor = Cesium.Color.fromCssColorString('#0d2137');
-  
+
   viewer.scene.globe.depthTestAgainstTerrain = false;
-  
+
   viewer.camera.flyTo({
     destination: Cesium.Cartesian3.fromDegrees(SCENARIO_LON, SCENARIO_LAT, 200000),
     orientation: {
@@ -54,34 +54,33 @@ export function initMap3D(container, onClick) {
     },
     duration: 0
   });
-  
+
   viewer.scene.screenSpaceCameraController.enableInputs = true;
   viewer.scene.screenSpaceCameraController.enableRotate = true;
   viewer.scene.screenSpaceCameraController.enableZoom = true;
   viewer.scene.screenSpaceCameraController.enableTilt = true;
   viewer.scene.screenSpaceCameraController.enableLook = true;
-  viewer.scene.screenSpaceCameraController.minimumZoomDistance = 0;
+  viewer.scene.screenSpaceCameraController.minimumZoomDistance = 50;
   viewer.scene.screenSpaceCameraController.maximumZoomDistance = Infinity;
-  viewer.scene.screenSpaceCameraController.enableCollisionDetection = false;
-  
+  viewer.scene.screenSpaceCameraController.enableCollisionDetection = true;
+
   viewer.scene.globe.depthTestAgainstTerrain = false;
   viewer.scene.fog.enabled = false;
   viewer.scene.debugShowFrustumPlanes = false;
   viewer.scene.requestRenderMode = false;
   viewer.scene.minimumFramerate = 0;
   viewer.scene.frustumCulling = false;
-  
-  viewer.scene.camera.frustum.near = 0.1;
+
   viewer.scene.globe.show = true;
   viewer.scene.globe.enableLighting = false;
-  
+
   const handler = new Cesium.ScreenSpaceEventHandler(viewer.scene.canvas);
-  
+
   handler.setInputAction((movement) => {
     const pickedObject = viewer.scene.pick(movement.position);
     if (Cesium.defined(pickedObject) && pickedObject.id) {
       const entity = pickedObject.id;
-      
+
       if (entity.icao24) {
         const aircraft = getSimulatedAircraft().get(entity.icao24);
         if (aircraft) {
@@ -89,7 +88,7 @@ export function initMap3D(container, onClick) {
           return;
         }
       }
-      
+
       if (entity.trackId) {
         const tracks = getTracks();
         const track = tracks.find(t => t.id === entity.trackId);
@@ -107,7 +106,7 @@ export function initMap3D(container, onClick) {
       }
     }
   }, Cesium.ScreenSpaceEventType.LEFT_CLICK);
-  
+
   return viewer;
 }
 
@@ -118,7 +117,7 @@ export function getViewer3D() {
 export function isWebGLAvailable() {
   try {
     const canvas = document.createElement('canvas');
-    return !!(window.WebGLRenderingContext && 
+    return !!(window.WebGLRenderingContext &&
       (canvas.getContext('webgl') || canvas.getContext('experimental-webgl')));
   } catch (e) {
     return false;
@@ -127,7 +126,7 @@ export function isWebGLAvailable() {
 
 export function setCameraPosition(lon, lat, altitude, heading, pitch) {
   if (!viewer) return;
-  
+
   viewer.camera.flyTo({
     destination: Cesium.Cartesian3.fromDegrees(lon, lat, altitude),
     orientation: {
@@ -141,7 +140,7 @@ export function setCameraPosition(lon, lat, altitude, heading, pitch) {
 
 export function getCameraPosition() {
   if (!viewer) return null;
-  
+
   const pos = viewer.camera.positionCartographic;
   return {
     lon: Cesium.Math.toDegrees(pos.longitude),
@@ -154,16 +153,16 @@ export function getCameraPosition() {
 
 export function followEntity(entity, offset = 50000) {
   if (!viewer || !entity) return;
-  
+
   const position = entity.position.getValue(viewer.clock.currentTime);
   if (!position) return;
-  
+
   const offsetPosition = Cesium.Cartesian3.add(
     position,
     new Cesium.Cartesian3(0, 0, offset),
     new Cesium.Cartesian3()
   );
-  
+
   viewer.camera.lookAt(offsetPosition, new Cesium.Cartesian3(0, 0, 0));
 }
 
